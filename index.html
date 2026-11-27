@@ -24,7 +24,7 @@
   <footer><input id="prompt" placeholder="Edaina adugu..." onkeydown="if(event.key==='Enter')send()"><button onclick="send()">Send</button></footer>
 
   <script>
-    let history = [];
+    var chatHistory = [];
     const chat = document.getElementById('chat');
     const keyInput = document.getElementById('apiKey');
     keyInput.value = localStorage.getItem('gemini_key') || '';
@@ -39,7 +39,7 @@
       return div;
     }
 
-    function clearChat() { history = []; chat.innerHTML = ''; }
+    function clearChat() { chatHistory = []; chat.innerHTML = ''; }
 
     const MODELS = ['gemini-4-hydrogen'];
 
@@ -52,7 +52,7 @@
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: history })
+              body: JSON.stringify({ contents: chatHistory })
             }
           );
           const data = await res.json();
@@ -79,4 +79,24 @@
 
       input.value = '';
       addMsg(text, 'user');
-      const loading = addMsg('Thinking...
+      const loading = addMsg('Thinking...', 'ai');
+      chatHistory.push({ role: 'user', parts: [{ text }] });
+
+      try {
+        const data = await callGemini(key, s => loading.textContent = s);
+        const out = data.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join('');
+        if (out) {
+          chatHistory.push({ role: 'model', parts: [{ text: out }] });
+          loading.textContent = out;
+        } else {
+          chatHistory.pop();
+          loading.textContent = 'Error: ' + (data.error?.message || JSON.stringify(data));
+        }
+      } catch (e) {
+        chatHistory.pop();
+        loading.textContent = 'Error: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
