@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,13 +19,13 @@
   </style>
 </head>
 <body>
-  <header><strong>✨ My AI Assistant Final</strong><button onclick="clearChat()" style="background:#333;padding:6px 10px;font-size:12px;">Clear</button></header>
+  <header><strong>✨ My AI Assistant Pro</strong><button onclick="clearChat()" style="background:#333;padding:6px 10px;font-size:12px;">Clear</button></header>
   <div id="key-bar"><input id="apiKey" type="password" placeholder="Paste Google AI Studio API Key..."></div>
   <div id="chat"></div>
   <footer><input id="prompt" placeholder="Edaina adugu..." onkeydown="if(event.key==='Enter')send()"><button onclick="send()">Send</button></footer>
 
   <script>
-    let history = [];
+    let prevId = null;
     const chat = document.getElementById('chat');
     const keyInput = document.getElementById('apiKey');
     keyInput.value = localStorage.getItem('gemini_key') || '';
@@ -39,7 +40,7 @@
       return div;
     }
 
-    function clearChat() { history = []; chat.innerHTML = ''; }
+    function clearChat() { prevId = null; chat.innerHTML = ''; }
 
     async function send() {
       const key = keyInput.value.trim();
@@ -50,19 +51,21 @@
 
       input.value = '';
       addMsg(text, 'user');
-      history.push({ role: 'user', parts: [{ text }] });
       const loading = addMsg('Thinking...', 'ai');
 
       try {
-        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(key), {
+        const body = { model: 'gemini-3.8-flash', input: text };
+        if (prevId) body.previous_interaction_id = prevId;
+
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(key), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: history })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || ('Error: ' + (data.error?.message || JSON.stringify(data)));
-        loading.textContent = reply;
-        history.push({ role: 'model', parts: [{ text: reply }] });
+        if (data.id) prevId = data.id;
+        const out = (data.outputs || []).find(o => o.text)?.text;
+        loading.textContent = out || ('Error: ' + (data.error?.message || JSON.stringify(data)));
       } catch (e) {
         loading.textContent = 'Error: ' + e.message;
       }
