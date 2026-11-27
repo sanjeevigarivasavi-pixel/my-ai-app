@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <header><strong>✨ My AI Assistant Pro</strong><button onclick="clearChat()" style="background:#333;padding:6px 10px;font-size:12px;">Clear</button></header>
+  <header><strong>✨ My AI Assistant</strong><button onclick="clearChat()" style="background:#333;padding:6px 10px;font-size:12px;">Clear</button></header>
   <div id="key-bar"><input id="apiKey" type="password" placeholder="Paste Google AI Studio API Key..."></div>
   <div id="chat"></div>
   <footer><input id="prompt" placeholder="Edaina adugu..." onkeydown="if(event.key==='Enter')send()"><button onclick="send()">Send</button></footer>
@@ -41,7 +41,7 @@
 
     function clearChat() { prevId = null; chat.innerHTML = ''; }
 
-    const MODELS = ['gemini-3.8-flash'];
+    const MODELS = ['gemini-4-hydrogen'];
 
     async function callGemini(key, text, onStatus) {
       for (const model of MODELS) {
@@ -90,4 +90,3 @@
     }
   </script>
 </body>
-</html>
